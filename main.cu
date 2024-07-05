@@ -1,12 +1,13 @@
 #include <mpi.h>
 #include <iostream>
+#include <random>
 #include <cuda_runtime.h>
 
-// Run with: mpirun -np 2 ./hellow
+// Run with: mpirun -np 4 ./hellow
 
 // CUDA kernel function
-__global__ void printFromDevice(int deviceId, double somevalue) {
-    printf("Hello World from GPU! I'm device %d with value %g\n", deviceId, somevalue);
+__global__ void printFromDevice(int deviceId, double someValue) {
+    printf("Hello World from GPU! I'm device %d with value %g\n", deviceId, someValue);
 }
 
 int main(int argc, char** argv) {
@@ -34,9 +35,14 @@ int main(int argc, char** argv) {
     // Print message from every process
     printf("CPU process %d of %d is using device %d\n", rank, size, deviceId);
 
-    // Launch CUDA kernel
-    double somevalue = 3.1416;
-    printFromDevice<<<1, 1>>>(deviceId, somevalue);
+    // Generate random number at runtime
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<> dis(0, 1);
+    double someValue = dis(gen);
+
+    // Launch CUDA kernel and pass arguments by value
+    printFromDevice<<<1, 1>>>(deviceId, someValue);
     cudaDeviceSynchronize();
 
     // Finalize MPI
